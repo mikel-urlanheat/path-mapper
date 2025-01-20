@@ -26,7 +26,7 @@ export function activate(context: vscode.ExtensionContext) {
 	const workspaceFolder: string = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? "";
 
 
-	const regex = /(https?:\/\/[^\s]+|(?:~|[a-zA-Z]:)?[\/\\](?:[^\/\\:\*\?<>\|"\s]+[\/\\])*[^\/\\:\*\?<>\|"\s]*|\.{0,2}[\/\\](?:[^\/\\:\*\?<>\|"\s]+[\/\\])*[^\/\\:\*\?<>\|"\s]*)/g;
+	const regex = /(https?:\/\/[^\s]+|(?:~|[a-zA-Z]:)?[\/\\](?:[^\/\\:\*\?<>\|"\s]+[\/\\])*[^\/\\:\*\?<>\|"\s]*(?::\d+)?|\.{0,2}[\/\\](?:[^\/\\:\*\?<>\|"\s]+[\/\\])*[^\/\\:\*\?<>\|"\s]*(?::\d+)?)/g;
 
 	vscode.window.registerTerminalLinkProvider({
 		provideTerminalLinks: (context: vscode.TerminalLinkContext, token: vscode.CancellationToken): any => {
@@ -101,7 +101,7 @@ export function activate(context: vscode.ExtensionContext) {
 				}
 			}
 			// console.log('path: ' + path, 'replaced: ' + replaced, 'vscode.Uri.parse(replaced): ' + vscode.Uri.parse(replaced));
-			vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(replaced));
+            openFileAtPosition(replaced);
 
 		}
 	});
@@ -109,6 +109,27 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(disposable);
 }
+
+// Open the file at the specified position if position is provided
+const openFileAtPosition = (replaced: string) => {
+    // Regular expression to match the file path and position
+    const match = replaced.match(/(.+?)(?::(\d+)|\((\d+)\))?$/);
+
+    if (match) {
+        const filePath = match[1];
+        const position = match[2] || match[3];
+
+        if (position) {
+            const line = parseInt(position, 10) - 1; // Adjust line for VSCode (0-indexed)
+            const uri = vscode.Uri.file(filePath);
+            const options = {
+                selection: new vscode.Range(line, 0, line, 0), // Initial line and character selection
+            };
+            return vscode.commands.executeCommand('vscode.open', uri, options);
+        }
+    }
+    return vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(replaced));
+};
 
 // Generate an absolute path from a relative path
 function getAbsolutePath(fileUri: string) {
