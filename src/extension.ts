@@ -113,7 +113,7 @@ export function activate(context: vscode.ExtensionContext) {
 // Open the file at the specified position if position is provided
 const openFileAtPosition = (replaced: string) => {
     // Regular expression to match the file path and position
-    const match = replaced.match(/(.+?)(?::(\d+)|\((\d+)\))?$/);
+    const match = replaced.match(/^(?!(?!file:\/\/)[a-zA-Z]+:\/\/)(.+?)(?::(\d+)|\((\d+)\))?$/);
 
     if (match) {
         const filePath = match[1];
